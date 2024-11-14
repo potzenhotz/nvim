@@ -10,6 +10,15 @@ return {
           },
         },
       },
+      yamlls = {
+        settings = {
+          yaml = {
+            format = {
+              bracketSpacing = false,
+            },
+          },
+        },
+      },
     },
   },
 }
