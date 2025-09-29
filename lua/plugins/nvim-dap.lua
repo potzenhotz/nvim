@@ -1,18 +1,11 @@
-return {
-  "mfussenegger/nvim-dap",
-  opts = {
-    dap = {
-      configurations = {
-        python = {
-          {
-            type = "python",
-            request = "launch",
-            name = "Launch file",
-            program = "${file}",
-            justMyCode = false, -- Set justMyCode to false
-          },
-        },
-      },
-    },
+local dap = require("dap")
+dap.configurations.python = {
+  {
+    justMyCode = false,
+    type = "python",
+    request = "launch",
+    name = "Launch file",
+    program = "${file}",
+    console = "integratedTerminal",
   },
 }
