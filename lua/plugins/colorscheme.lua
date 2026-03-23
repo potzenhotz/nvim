@@ -21,11 +21,14 @@ return {
     name = "catppuccin",
   },
   { "rebelot/kanagawa.nvim", lazy = true },
+  { "zenbones-theme/zenbones.nvim", lazy = true, dependencies = { "rktjmp/lush.nvim" } },
+  { "luisiacc/gruvbox-baby", lazy = true, priority = 1000 },
 
   {
     "LazyVim/LazyVim",
     opts = {
       colorscheme = "kanagawa-wave",
+      --colorscheme = "kanagawabones",
     },
   },
 }
