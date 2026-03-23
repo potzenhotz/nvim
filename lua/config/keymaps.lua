@@ -14,3 +14,8 @@ map({ "n", "v" }, "J", "5j", { noremap = true, desc = "Down faster" })
 -- Remap K and J
 map({ "n", "v" }, "<leader>k", "K", { noremap = true, desc = "Keyword" })
 map({ "n", "v" }, "<leader>j", "J", { noremap = true, desc = "Join lines" })
+
+map("n", "g]", function()
+  vim.cmd("vsplit")
+  vim.lsp.buf.definition()
+end, { desc = "Definition (vertical split)" })
