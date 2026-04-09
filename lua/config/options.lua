@@ -3,8 +3,8 @@
 -- Add any additional options here
 -- LSP Server to use for Python.
 -- Set to "basedpyright" to use basedpyright instead of pyright.
-vim.g.lazyvim_python_lsp = "pyright"
-vim.g.lazyvim_python_ruff = "ruff_lsp"
+vim.g.lazyvim_python_lsp = "basedpyright"
+vim.g.lazyvim_python_ruff = "ruff"
 
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 20
