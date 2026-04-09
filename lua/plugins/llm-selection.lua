@@ -2,18 +2,18 @@
 -- Keymaps: <leader>ce (explain), <leader>cp (custom prompt), <leader>cx (refactor),
 --          <leader>ct (tests), <leader>cM (switch model)
 
-local model = "anthropic/claude-sonnet-4"
+local model = "anthropic/claude-opus-4.6"
 local history_buf = nil
 
 local MODELS = {
+  "anthropic/claude-opus-4.6",
   "anthropic/claude-sonnet-4",
   "anthropic/claude-haiku-4-5",
   "google/gemini-2.5-pro-preview",
   "deepseek/deepseek-chat-v3",
 }
 
-local SYSTEM_PROMPT =
-  "You are a helpful coding assistant. You receive code snippets from the user. "
+local SYSTEM_PROMPT = "You are a helpful coding assistant. You receive code snippets from the user. "
   .. "Be concise and precise. When showing code changes, show only the relevant parts unless asked for the full rewrite."
 
 local function get_visual_selection()
@@ -92,7 +92,7 @@ local function send_to_llm(selection, prompt)
     model = model,
     messages = {
       { role = "system", content = SYSTEM_PROMPT },
-      { role = "user",   content = user_content },
+      { role = "user", content = user_content },
     },
   })
 
@@ -108,12 +108,18 @@ local function send_to_llm(selection, prompt)
   local result_chunks = {}
 
   vim.fn.jobstart({
-    "curl", "--silent", "--show-error",
-    "-X", "POST",
+    "curl",
+    "--silent",
+    "--show-error",
+    "-X",
+    "POST",
     "https://openrouter.ai/api/v1/chat/completions",
-    "-H", "Authorization: Bearer " .. api_key,
-    "-H", "Content-Type: application/json",
-    "-d", body,
+    "-H",
+    "Authorization: Bearer " .. api_key,
+    "-H",
+    "Content-Type: application/json",
+    "-d",
+    body,
   }, {
     stdout_buffered = true,
     on_stdout = function(_, data)
@@ -139,7 +145,12 @@ local function send_to_llm(selection, prompt)
     on_exit = function(_, code)
       vim.schedule(function()
         if code ~= 0 then
-          replace_history_lines(buf, thinking_line, thinking_line + 1, { "_Error: curl exited with code " .. code .. "_" })
+          replace_history_lines(
+            buf,
+            thinking_line,
+            thinking_line + 1,
+            { "_Error: curl exited with code " .. code .. "_" }
+          )
           return
         end
 
@@ -151,7 +162,12 @@ local function send_to_llm(selection, prompt)
 
         local ok, decoded = pcall(vim.json.decode, raw)
         if not ok then
-          replace_history_lines(buf, thinking_line, thinking_line + 1, { "_Error: failed to parse JSON response_", "", raw })
+          replace_history_lines(
+            buf,
+            thinking_line,
+            thinking_line + 1,
+            { "_Error: failed to parse JSON response_", "", raw }
+          )
           return
         end
 
@@ -163,7 +179,12 @@ local function send_to_llm(selection, prompt)
 
         local content = vim.tbl_get(decoded, "choices", 1, "message", "content")
         if not content then
-          replace_history_lines(buf, thinking_line, thinking_line + 1, { "_Error: unexpected response structure_", "", raw })
+          replace_history_lines(
+            buf,
+            thinking_line,
+            thinking_line + 1,
+            { "_Error: unexpected response structure_", "", raw }
+          )
           return
         end
 
@@ -225,9 +246,12 @@ local function check_credits()
   local result_chunks = {}
 
   vim.fn.jobstart({
-    "curl", "--silent", "--show-error",
+    "curl",
+    "--silent",
+    "--show-error",
     "https://openrouter.ai/api/v1/auth/key",
-    "-H", "Authorization: Bearer " .. api_key,
+    "-H",
+    "Authorization: Bearer " .. api_key,
   }, {
     stdout_buffered = true,
     on_stdout = function(_, data)
@@ -274,7 +298,9 @@ end
 local function switch_model()
   vim.ui.select(MODELS, {
     prompt = "Select LLM model:",
-    format_item = function(item) return item end,
+    format_item = function(item)
+      return item
+    end,
   }, function(choice)
     if choice then
       model = choice
