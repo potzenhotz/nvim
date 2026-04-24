@@ -1,9 +1,11 @@
 -- LLM selection chat via OpenRouter API
 -- Keymaps: <leader>ce (explain), <leader>cp (custom prompt), <leader>cx (refactor),
---          <leader>ct (tests), <leader>cM (switch model)
+--          <leader>ct (tests), <leader>cM (switch model), <leader>cf (follow-up),
+--          <leader>cn (new chat)
 
 local model = "anthropic/claude-opus-4.6"
 local history_buf = nil
+local conversation_messages = {}
 
 local MODELS = {
   "anthropic/claude-opus-4.6",
@@ -86,14 +88,21 @@ local function send_to_llm(selection, prompt)
     return
   end
 
-  local user_content = prompt .. "\n\n```\n" .. selection .. "\n```"
+  local user_content
+  if selection and selection ~= "" then
+    user_content = prompt .. "\n\n```\n" .. selection .. "\n```"
+  else
+    user_content = prompt
+  end
+
+  table.insert(conversation_messages, { role = "user", content = user_content })
+
+  local messages = { { role = "system", content = SYSTEM_PROMPT } }
+  vim.list_extend(messages, conversation_messages)
 
   local body = vim.json.encode({
     model = model,
-    messages = {
-      { role = "system", content = SYSTEM_PROMPT },
-      { role = "user", content = user_content },
-    },
+    messages = messages,
   })
 
   local buf = open_history_window()
@@ -188,6 +197,7 @@ local function send_to_llm(selection, prompt)
           return
         end
 
+        table.insert(conversation_messages, { role = "assistant", content = content })
         local lines = vim.split(content, "\n", { plain = true })
         replace_history_lines(buf, thinking_line, thinking_line + 1, lines)
       end)
@@ -295,6 +305,28 @@ local function check_credits()
   })
 end
 
+local function llm_followup()
+  if #conversation_messages == 0 then
+    vim.notify("LLM: no conversation to follow up on — ask a question first", vim.log.levels.WARN)
+    return
+  end
+  vim.ui.input({ prompt = "LLM follow-up: " }, function(input)
+    if input and input ~= "" then
+      send_to_llm(nil, input)
+    end
+  end)
+end
+
+local function llm_new_chat()
+  conversation_messages = {}
+  if history_buf and vim.api.nvim_buf_is_valid(history_buf) then
+    vim.bo[history_buf].modifiable = true
+    vim.api.nvim_buf_set_lines(history_buf, 0, -1, false, { "" })
+    vim.bo[history_buf].modifiable = false
+  end
+  vim.notify("LLM: new conversation started", vim.log.levels.INFO)
+end
+
 local function switch_model()
   vim.ui.select(MODELS, {
     prompt = "Select LLM model:",
@@ -354,6 +386,22 @@ return {
         end,
         mode = "x",
         desc = "LLM: Write unit tests",
+      },
+      {
+        "<leader>cf",
+        function()
+          llm_followup()
+        end,
+        mode = "n",
+        desc = "LLM: Follow-up question",
+      },
+      {
+        "<leader>cn",
+        function()
+          llm_new_chat()
+        end,
+        mode = "n",
+        desc = "LLM: New conversation",
       },
       {
         "<leader>cM",
