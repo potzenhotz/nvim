@@ -1,14 +1,14 @@
 -- LLM selection chat via OpenRouter API
 -- Keymaps: <leader>ce (explain), <leader>cp (custom prompt), <leader>cx (refactor),
---          <leader>ct (tests), <leader>cM (switch model), <leader>cf (follow-up),
---          <leader>cn (new chat)
+--          <leader>ct (tests), <leader>cT (PySpark pytest), <leader>cM (switch model),
+--          <leader>cf (follow-up), <leader>cn (new chat)
 
-local model = "anthropic/claude-opus-4.6"
+local model = "anthropic/claude-opus-4"
 local history_buf = nil
 local conversation_messages = {}
 
 local MODELS = {
-  "anthropic/claude-opus-4.6",
+  "anthropic/claude-opus-4",
   "anthropic/claude-sonnet-4",
   "anthropic/claude-haiku-4-5",
   "google/gemini-2.5-pro-preview",
@@ -305,6 +305,30 @@ local function check_credits()
   })
 end
 
+local function llm_pytest()
+  local selection = get_visual_selection()
+  if selection == "" then
+    vim.notify("LLM: no text selected", vim.log.levels.WARN)
+    return
+  end
+
+  local cmd_path = vim.fn.expand("~/.claude/commands/pytest.md")
+  local f = io.open(cmd_path, "r")
+  if not f then
+    vim.notify("LLM: could not read " .. cmd_path, vim.log.levels.ERROR)
+    return
+  end
+  local raw = f:read("*a")
+  f:close()
+
+  -- strip YAML frontmatter (--- ... ---)
+  local body = raw:gsub("^%-%-%-.-%-%-%-\n", "")
+  -- replace $ARGUMENTS with the selected code
+  local prompt = body:gsub("%$ARGUMENTS", selection)
+
+  send_to_llm(nil, prompt)
+end
+
 local function llm_followup()
   if #conversation_messages == 0 then
     vim.notify("LLM: no conversation to follow up on — ask a question first", vim.log.levels.WARN)
@@ -386,6 +410,14 @@ return {
         end,
         mode = "x",
         desc = "LLM: Write unit tests",
+      },
+      {
+        "<leader>cT",
+        function()
+          llm_pytest()
+        end,
+        mode = "x",
+        desc = "LLM: Write PySpark pytest (project conventions)",
       },
       {
         "<leader>cf",
